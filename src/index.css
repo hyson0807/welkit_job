@@ -1,0 +1,16 @@
+/* index.css */
+@import "tailwindcss";
+
+/* 커스텀 스타일 */
+@layer base {
+    body {
+        @apply antialiased;
+    }
+}
+
+/* 커스텀 유틸리티 */
+@layer utilities {
+    .animation-delay-200 {
+        animation-delay: 200ms;
+    }
+}
