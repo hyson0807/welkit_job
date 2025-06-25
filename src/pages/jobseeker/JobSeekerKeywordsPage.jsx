@@ -3,8 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../store/contexts/AuthContext';
 import { supabase } from '../../services/supabase/client';
+import {useCheckUserType} from "../auth/checkUserType.js";
 
 const JobSeekerKeywordsPage = () => {
+    const { isAuthorized, isLoading } = useCheckUserType('user');
     const navigate = useNavigate();
     const { user, signOut } = useAuth();
 
@@ -14,14 +16,9 @@ const JobSeekerKeywordsPage = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
-    useEffect(() => {
-        if (!user) {
-            navigate('/login');
-            return;
-        }
-        fetchKeywords();
-        fetchUserKeywords();
-    }, [user, navigate]);
+
+
+
 
     // 모든 키워드 가져오기
     const fetchKeywords = async () => {
@@ -68,6 +65,18 @@ const JobSeekerKeywordsPage = () => {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (!user) {
+            navigate('/login');
+            return;
+        }
+        fetchKeywords();
+        fetchUserKeywords();
+    }, [user, navigate]);
+
+    if (isLoading) {return <div>Loading...</div>;}
+    if (!isAuthorized) {return null;}
 
     // 키워드 선택/해제
     const toggleKeyword = (keywordId) => {

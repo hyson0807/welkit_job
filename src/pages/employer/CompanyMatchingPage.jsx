@@ -1,12 +1,11 @@
-
-
-// src/pages/employer/CompanyMatchingPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../store/contexts/AuthContext';
 import { supabase } from '../../services/supabase/client';
+import {useCheckUserType} from "../auth/checkUserType.js";
 
 const CompanyMatchingPage = () => {
+    const { isAuthorized, isLoading } = useCheckUserType('company');
     const navigate = useNavigate();
     const { user, signOut } = useAuth();
 
@@ -14,14 +13,6 @@ const CompanyMatchingPage = () => {
     const [matchedCandidates, setMatchedCandidates] = useState([]);
     const [loading, setLoading] = useState(true);
     const [companyInfo, setCompanyInfo] = useState(null);
-
-    useEffect(() => {
-        if (!user) {
-            navigate('/login');
-            return;
-        }
-        fetchCompanyDataAndMatch();
-    }, [user, navigate]);
 
     const fetchCompanyDataAndMatch = async () => {
         try {
@@ -156,6 +147,14 @@ const CompanyMatchingPage = () => {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        fetchCompanyDataAndMatch();
+    }, [user, navigate]);
+
+    if (isLoading) {return <div>Loading...</div>;}
+    if (!isAuthorized) {return null;}
+
 
     const handleLogout = async () => {
         await signOut();

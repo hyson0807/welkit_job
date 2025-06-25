@@ -3,23 +3,16 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../store/contexts/AuthContext';
 import { supabase } from '../../services/supabase/client';
+import {useCheckUserType} from "../auth/checkUserType.js";
 
 const JobSeekerMatchingPage = () => {
+    const { isAuthorized, isLoading } = useCheckUserType('user');
     const navigate = useNavigate();
     const { user, signOut } = useAuth();
-
     const [userKeywords, setUserKeywords] = useState([]);
     const [matchedCompanies, setMatchedCompanies] = useState([]);
     const [loading, setLoading] = useState(true);
     const [userInfo, setUserInfo] = useState(null);
-
-    useEffect(() => {
-        if (!user) {
-            navigate('/login');
-            return;
-        }
-        fetchUserDataAndMatch();
-    }, [user, navigate]);
 
     const fetchUserDataAndMatch = async () => {
         try {
@@ -47,23 +40,7 @@ const JobSeekerMatchingPage = () => {
             // 모든 회사와 그들의 키워드 가져오기
             const { data: companies, error: companyError } = await supabase
                 .from('profiles')
-                .select(`
-          id,
-          name,
-          email,
-          description,
-          website,
-          address,
-          company_keyword (
-            keyword_id,
-            priority,
-            keyword (
-              id,
-              keyword,
-              category
-            )
-          )
-        `)
+                .select(`id,name,email,description,website,address,company_keyword (keyword_id,priority,keyword (id,keyword,category))`)
                 .eq('user_type', 'company');
 
             if (companyError) throw companyError;
@@ -150,6 +127,17 @@ const JobSeekerMatchingPage = () => {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (!user) {
+            navigate('/login');
+            return;
+        }
+        fetchUserDataAndMatch();
+    }, [user, navigate]);
+
+    if (isLoading) {return <div>Loading...</div>;}
+    if (!isAuthorized) {return null;}
 
     const handleLogout = async () => {
         await signOut();

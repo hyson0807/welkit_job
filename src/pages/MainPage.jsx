@@ -1,11 +1,13 @@
 // src/pages/MainPage.jsx
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { useNavigate } from 'react-router-dom';
+import {useAuth} from "../store/contexts/AuthContext.jsx";
 
 const MainPage = () => {
     const [language, setLanguage] = useState('en');
     const [showLanguageMenu, setShowLanguageMenu] = useState(false);
     const navigate = useNavigate();
+    const { user, signOut } = useAuth();
 
     const languages = [
         { code: 'en', name: 'English', flag: '🇺🇸' },
@@ -19,6 +21,10 @@ const MainPage = () => {
         localStorage.setItem('userType', mode);
         navigate('/login');
     };
+
+    useEffect(() => {
+        signOut();
+    }, []);
 
     return (
         <div className="min-h-screen bg-[#F6F6F4] overflow-x-hidden">
@@ -83,7 +89,7 @@ const MainPage = () => {
                 <div className="flex gap-5">
                     {/* Job Seeker Card */}
                     <div
-                        onClick={() => handleModeSelect('jobseeker')}
+                        onClick={() => handleModeSelect('user')}
                         className="flex-1 bg-white rounded-2xl p-7 text-center cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl border-2 border-transparent hover:border-[#1E4B7B] relative overflow-hidden group"
                     >
                         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#1E4B7B] to-black transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
@@ -108,7 +114,7 @@ const MainPage = () => {
 
                     {/* Employer Card */}
                     <div
-                        onClick={() => handleModeSelect('employer')}
+                        onClick={() => handleModeSelect('company')}
                         className="flex-1 bg-white rounded-2xl p-7 text-center cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl border-2 border-transparent hover:border-[#1E4B7B] relative overflow-hidden group"
                     >
                         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#1E4B7B] to-black transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>

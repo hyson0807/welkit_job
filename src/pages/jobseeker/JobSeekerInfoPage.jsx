@@ -1,31 +1,18 @@
-// src/pages/jobseeker/JobSeekerInfoPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../store/contexts/AuthContext';
 import { supabase } from '../../services/supabase/client';
+import {useCheckUserType} from "../auth/checkUserType.js";
 
 const JobSeekerInfoPage = () => {
+    const { isAuthorized, isLoading } = useCheckUserType('user');
     const navigate = useNavigate();
     const { user, signOut } = useAuth();
-
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [profile, setProfile] = useState(null);
-    const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        visa: '',
-        visa_expiry: ''
-    });
+    const [formData, setFormData] = useState({name: '', email: '', visa: '', visa_expiry: ''});
 
-    // 프로필 정보 가져오기
-    useEffect(() => {
-        if (!user) {
-            navigate('/login');
-            return;
-        }
-        fetchProfile();
-    }, [user, navigate]);
 
     const fetchProfile = async () => {
         try {
@@ -63,6 +50,19 @@ const JobSeekerInfoPage = () => {
             setLoading(false);
         }
     };
+
+
+    // 프로필 정보 가져오기
+    useEffect(() => {
+        if (user) {
+            fetchProfile();
+        }
+    }, [user, navigate]);
+
+    if (isLoading) {return <div>Loading...</div>;}
+    if (!isAuthorized) {return null;}
+
+
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;

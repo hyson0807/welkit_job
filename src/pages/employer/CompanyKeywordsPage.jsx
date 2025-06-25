@@ -3,8 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../store/contexts/AuthContext';
 import { supabase } from '../../services/supabase/client';
+import {useCheckUserType} from "../auth/checkUserType.js";
 
 const CompanyKeywordsPage = () => {
+    const { isAuthorized, isLoading } = useCheckUserType('company');
+
     const navigate = useNavigate();
     const { user, signOut } = useAuth();
 
@@ -16,16 +19,7 @@ const CompanyKeywordsPage = () => {
     const [requiredKeywords, setRequiredKeywords] = useState([]); // 필수 키워드
     const [preferredKeywords, setPreferredKeywords] = useState([]); // 우대 키워드
 
-    useEffect(() => {
-        if (!user) {
-            navigate('/login');
-            return;
-        }
-        fetchKeywords();
-        fetchCompanyKeywords();
-    }, [user, navigate]);
 
-    // 모든 키워드 가져오기
     const fetchKeywords = async () => {
         try {
             const { data, error } = await supabase
@@ -50,8 +44,6 @@ const CompanyKeywordsPage = () => {
             console.error('Error fetching keywords:', error);
         }
     };
-
-    // 기존에 선택한 키워드 가져오기
     const fetchCompanyKeywords = async () => {
         try {
             const { data, error } = await supabase
@@ -75,6 +67,16 @@ const CompanyKeywordsPage = () => {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        fetchKeywords();
+        fetchCompanyKeywords();
+    }, [user, navigate]);
+
+    if (isLoading) {return <div>Loading...</div>;}
+    if (!isAuthorized) {return null;}
+
+
 
     // 키워드 선택/해제
     const toggleKeyword = (keywordId, type = 'normal') => {

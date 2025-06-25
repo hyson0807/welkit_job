@@ -1,5 +1,4 @@
-// src/pages/auth/LoginPage.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabase/client';
 import axios from 'axios';
@@ -13,48 +12,14 @@ const LoginPage = () => {
     const navigate = useNavigate();
 
     // localStorage에서 userType 가져오기
-    const userType = localStorage.getItem('userType') || 'jobseeker';
-
-    // 이미 로그인되어 있는지 확인
-    useEffect(() => {
-        checkUser();
-    }, []);
-
-    const checkUser = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            // 데이터베이스에서 실제 user_type 확인
-            const { data: profile, error } = await supabase
-                .from('profiles')
-                .select('user_type')
-                .eq('id', user.id)
-                .single();
-
-            if (profile) {
-                // localStorage의 userType과 실제 user_type이 다른 경우
-                if (profile.user_type !== userType) {
-                    // 로그아웃 처리
-                    await supabase.auth.signOut();
-                    setError('Please login with the correct account type.');
-                    return;
-                }
-
-                // 올바른 계정 타입으로 로그인된 경우
-                if (userType === 'jobseeker') {
-                    navigate('/jobseeker/info');
-                } else {
-                    navigate('/employer/info');
-                }
-            }
-        }
-    };
+    const userType = localStorage.getItem('userType');
 
     const handleSignIn = async () => {
         setIsLoading(true);
         setError('');
 
         try {
-            const { data, error } = await supabase.auth.signInWithPassword({
+            const { error } = await supabase.auth.signInWithPassword({
                 email,
                 password
             });
@@ -65,7 +30,7 @@ const LoginPage = () => {
             }
 
             // 로그인 성공
-            if (userType === 'jobseeker') {
+            if (userType === 'user') {
                 navigate('/jobseeker/info');
             } else {
                 navigate('/employer/info');
@@ -134,9 +99,9 @@ const LoginPage = () => {
                     {/* User Type Indicator */}
                     <div className="text-center mb-6">
                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#F6F6F4] rounded-full">
-                            <span className="text-2xl">{userType === 'jobseeker' ? '👔' : '🏢'}</span>
+                            <span className="text-2xl">{userType === 'user' ? '👔' : '🏢'}</span>
                             <span className="text-sm font-medium text-gray-700">
-                {userType === 'jobseeker' ? 'Job Seeker' : 'Employer'} Account
+                {userType === 'user' ? 'Job Seeker' : 'Employer'} Account
               </span>
                         </div>
                     </div>
