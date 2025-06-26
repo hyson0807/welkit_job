@@ -17,9 +17,6 @@ const JobSeekerKeywordsPage = () => {
     const [saving, setSaving] = useState(false);
 
 
-
-
-
     // 모든 키워드 가져오기
     const fetchKeywords = async () => {
         try {
@@ -67,10 +64,6 @@ const JobSeekerKeywordsPage = () => {
     };
 
     useEffect(() => {
-        if (!user) {
-            navigate('/login');
-            return;
-        }
         fetchKeywords();
         fetchUserKeywords();
     }, [user, navigate]);

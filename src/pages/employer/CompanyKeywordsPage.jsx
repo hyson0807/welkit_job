@@ -44,6 +44,7 @@ const CompanyKeywordsPage = () => {
             console.error('Error fetching keywords:', error);
         }
     };
+
     const fetchCompanyKeywords = async () => {
         try {
             const { data, error } = await supabase
