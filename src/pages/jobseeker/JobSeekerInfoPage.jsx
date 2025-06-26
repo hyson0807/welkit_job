@@ -11,8 +11,13 @@ const JobSeekerInfoPage = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [profile, setProfile] = useState(null);
-    const [formData, setFormData] = useState({name: '', email: '', visa: '', visa_expiry: ''});
-
+    const [formData, setFormData] = useState({
+        name: '',
+        birth_date: '',
+        nationality: '',
+        visa: '',
+        location: ''
+    });
 
     const fetchProfile = async () => {
         try {
@@ -33,16 +38,11 @@ const JobSeekerInfoPage = () => {
                 setProfile(profile);
                 setFormData({
                     name: profile.name || '',
-                    email: profile.email || user.email || '',
+                    birth_date: profile.birth || '',
+                    nationality: profile.country || '',
                     visa: profile.visa || '',
-                    visa_expiry: profile.visa_expiry || ''
+                    location: profile.address || ''
                 });
-            } else {
-                // 프로필이 없는 경우 기본값 설정
-                setFormData(prev => ({
-                    ...prev,
-                    email: user.email || ''
-                }));
             }
         } catch (error) {
             console.error('Error fetching profile:', error);
@@ -50,7 +50,6 @@ const JobSeekerInfoPage = () => {
             setLoading(false);
         }
     };
-
 
     // 프로필 정보 가져오기
     useEffect(() => {
@@ -61,8 +60,6 @@ const JobSeekerInfoPage = () => {
 
     if (isLoading) {return <div>Loading...</div>;}
     if (!isAuthorized) {return null;}
-
-
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -76,14 +73,15 @@ const JobSeekerInfoPage = () => {
         try {
             setSaving(true);
 
-            // profiles 테이블 업데이트 또는 삽입
+            // profiles 테이블 업데이트
             const { error } = await supabase
                 .from('profiles')
                 .update({
                     name: formData.name,
-                    email: formData.email,
+                    birth: formData.birth_date,
+                    country: formData.nationality,
                     visa: formData.visa,
-                    visa_expiry: formData.visa_expiry,
+                    address: formData.location
                 })
                 .eq('id', user.id);
 
@@ -169,76 +167,122 @@ const JobSeekerInfoPage = () => {
                     <h2 className="text-2xl font-bold text-gray-800 mb-6">Enter Your Information</h2>
 
                     <div className="space-y-6">
-                        {/* Name */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Full Name <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                name="name"
-                                value={formData.name}
-                                onChange={handleInputChange}
-                                placeholder="Enter your full name"
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E4B7B] focus:border-transparent"
-                                required
-                            />
+                        {/* Name and Birth Date - One Line */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Full Name <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    value={formData.name}
+                                    onChange={handleInputChange}
+                                    placeholder="Enter your name"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E4B7B] focus:border-transparent"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Birth Date <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="date"
+                                    name="birth_date"
+                                    value={formData.birth_date}
+                                    onChange={handleInputChange}
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E4B7B] focus:border-transparent"
+                                    required
+                                    max={new Date().toISOString().split('T')[0]}
+                                />
+                            </div>
                         </div>
 
-                        {/* Email */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Email <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="email"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleInputChange}
-                                placeholder="Enter your email"
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E4B7B] focus:border-transparent bg-gray-50"
-                                required
-                                disabled={true} // 이메일은 수정 불가
-                            />
-                            <p className="mt-1 text-xs text-gray-500">Email cannot be changed</p>
+                        {/* Nationality and Visa - One Line */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Nationality <span className="text-red-500">*</span>
+                                </label>
+                                <select
+                                    name="nationality"
+                                    value={formData.nationality}
+                                    onChange={handleInputChange}
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E4B7B] focus:border-transparent"
+                                    required
+                                >
+                                    <option value="">Select nationality</option>
+                                    <option value="Vietnam">Vietnam</option>
+                                    <option value="China">China</option>
+                                    <option value="Philippines">Philippines</option>
+                                    <option value="Thailand">Thailand</option>
+                                    <option value="Indonesia">Indonesia</option>
+                                    <option value="Cambodia">Cambodia</option>
+                                    <option value="Myanmar">Myanmar</option>
+                                    <option value="Nepal">Nepal</option>
+                                    <option value="Bangladesh">Bangladesh</option>
+                                    <option value="Sri Lanka">Sri Lanka</option>
+                                    <option value="Mongolia">Mongolia</option>
+                                    <option value="Uzbekistan">Uzbekistan</option>
+                                    <option value="Pakistan">Pakistan</option>
+                                    <option value="India">India</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Visa Type <span className="text-red-500">*</span>
+                                </label>
+                                <select
+                                    name="visa"
+                                    value={formData.visa}
+                                    onChange={handleInputChange}
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E4B7B] focus:border-transparent"
+                                    required
+                                >
+                                    <option value="">Select visa type</option>
+                                    <option value="E-9">E-9 (Non-professional Employment)</option>
+                                    <option value="H-2">H-2 (Working Visit)</option>
+                                    <option value="F-4">F-4 (Overseas Korean)</option>
+                                    <option value="F-6">F-6 (Marriage Immigrant)</option>
+                                    <option value="F-2">F-2 (Resident)</option>
+                                    <option value="F-5">F-5 (Permanent Resident)</option>
+                                </select>
+                            </div>
                         </div>
 
-                        {/* Visa Type */}
+                        {/* Location */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Visa Type <span className="text-red-500">*</span>
+                                Preferred Location <span className="text-red-500">*</span>
                             </label>
                             <select
-                                name="visa"
-                                value={formData.visa}
+                                name="location"
+                                value={formData.location}
                                 onChange={handleInputChange}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E4B7B] focus:border-transparent"
                                 required
                             >
-                                <option value="">Select your visa type</option>
-                                <option value="E-9">E-9 (Non-professional Employment)</option>
-                                <option value="H-2">H-2 (Working Visit)</option>
-                                <option value="F-4">F-4 (Overseas Korean)</option>
-                                <option value="F-6">F-6 (Marriage Immigrant)</option>
-                                <option value="F-2">F-2 (Resident)</option>
-                                <option value="F-5">F-5 (Permanent Resident)</option>
+                                <option value="">Select location</option>
+                                <option value="Seoul">Seoul</option>
+                                <option value="Gyeonggi">Gyeonggi</option>
+                                <option value="Incheon">Incheon</option>
+                                <option value="Busan">Busan</option>
+                                <option value="Daegu">Daegu</option>
+                                <option value="Gwangju">Gwangju</option>
+                                <option value="Daejeon">Daejeon</option>
+                                <option value="Ulsan">Ulsan</option>
+                                <option value="Sejong">Sejong</option>
+                                <option value="Gangwon">Gangwon</option>
+                                <option value="Chungbuk">Chungbuk</option>
+                                <option value="Chungnam">Chungnam</option>
+                                <option value="Jeonbuk">Jeonbuk</option>
+                                <option value="Jeonnam">Jeonnam</option>
+                                <option value="Gyeongbuk">Gyeongbuk</option>
+                                <option value="Gyeongnam">Gyeongnam</option>
+                                <option value="Jeju">Jeju</option>
                             </select>
-                        </div>
-
-                        {/* Visa Expiry Date */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Visa Expiry Date <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="date"
-                                name="visa_expiry"
-                                value={formData.visa_expiry}
-                                onChange={handleInputChange}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1E4B7B] focus:border-transparent"
-                                required
-                                min={new Date().toISOString().split('T')[0]} // 오늘 날짜 이후만 선택 가능
-                            />
                         </div>
                     </div>
 
@@ -252,7 +296,7 @@ const JobSeekerInfoPage = () => {
                         </button>
                         <button
                             onClick={handleSaveAndNext}
-                            disabled={saving || !formData.name || !formData.visa || !formData.visa_expiry}
+                            disabled={saving || !formData.name || !formData.birth_date || !formData.nationality || !formData.visa || !formData.location}
                             className="flex-1 py-3 bg-[#1E4B7B] text-white font-semibold rounded-lg hover:bg-[#164066] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {saving ? 'Saving...' : 'Next: Select Keywords'}

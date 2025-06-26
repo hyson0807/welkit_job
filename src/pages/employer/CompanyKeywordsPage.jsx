@@ -13,12 +13,8 @@ const CompanyKeywordsPage = () => {
 
     const [keywords, setKeywords] = useState([]);
     const [selectedKeywords, setSelectedKeywords] = useState([]);
-    const [existingKeywords, setExistingKeywords] = useState([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [requiredKeywords, setRequiredKeywords] = useState([]); // 필수 키워드
-    const [preferredKeywords, setPreferredKeywords] = useState([]); // 우대 키워드
-
 
     const fetchKeywords = async () => {
         try {
@@ -49,19 +45,13 @@ const CompanyKeywordsPage = () => {
         try {
             const { data, error } = await supabase
                 .from('company_keyword')
-                .select('keyword_id, priority')
+                .select('keyword_id')
                 .eq('company_id', user.id);
 
             if (error) throw error;
 
-            const allKeywordIds = data.map(item => item.keyword_id);
-            const required = data.filter(item => item.priority === 1).map(item => item.keyword_id);
-            const preferred = data.filter(item => item.priority === 2).map(item => item.keyword_id);
-
-            setExistingKeywords(allKeywordIds);
-            setSelectedKeywords(allKeywordIds);
-            setRequiredKeywords(required);
-            setPreferredKeywords(preferred);
+            const keywordIds = data.map(item => item.keyword_id);
+            setSelectedKeywords(keywordIds);
         } catch (error) {
             console.error('Error fetching company keywords:', error);
         } finally {
@@ -77,44 +67,12 @@ const CompanyKeywordsPage = () => {
     if (isLoading) {return <div>Loading...</div>;}
     if (!isAuthorized) {return null;}
 
-
-
     // 키워드 선택/해제
-    const toggleKeyword = (keywordId, type = 'normal') => {
-        if (type === 'required') {
-            // 필수 키워드 토글
-            if (requiredKeywords.includes(keywordId)) {
-                setRequiredKeywords(prev => prev.filter(id => id !== keywordId));
-                setSelectedKeywords(prev => prev.filter(id => id !== keywordId));
-            } else {
-                setRequiredKeywords(prev => [...prev, keywordId]);
-                setPreferredKeywords(prev => prev.filter(id => id !== keywordId)); // 우대에서 제거
-                if (!selectedKeywords.includes(keywordId)) {
-                    setSelectedKeywords(prev => [...prev, keywordId]);
-                }
-            }
-        } else if (type === 'preferred') {
-            // 우대 키워드 토글
-            if (preferredKeywords.includes(keywordId)) {
-                setPreferredKeywords(prev => prev.filter(id => id !== keywordId));
-                setSelectedKeywords(prev => prev.filter(id => id !== keywordId));
-            } else {
-                setPreferredKeywords(prev => [...prev, keywordId]);
-                setRequiredKeywords(prev => prev.filter(id => id !== keywordId)); // 필수에서 제거
-                if (!selectedKeywords.includes(keywordId)) {
-                    setSelectedKeywords(prev => [...prev, keywordId]);
-                }
-            }
+    const toggleKeyword = (keywordId) => {
+        if (selectedKeywords.includes(keywordId)) {
+            setSelectedKeywords(prev => prev.filter(id => id !== keywordId));
         } else {
-            // 일반 토글 (선택/해제)
-            if (selectedKeywords.includes(keywordId)) {
-                setSelectedKeywords(prev => prev.filter(id => id !== keywordId));
-                setRequiredKeywords(prev => prev.filter(id => id !== keywordId));
-                setPreferredKeywords(prev => prev.filter(id => id !== keywordId));
-            } else {
-                setSelectedKeywords(prev => [...prev, keywordId]);
-                setPreferredKeywords(prev => [...prev, keywordId]); // 기본적으로 우대로 추가
-            }
+            setSelectedKeywords(prev => [...prev, keywordId]);
         }
     };
 
@@ -136,7 +94,7 @@ const CompanyKeywordsPage = () => {
                 const companyKeywords = selectedKeywords.map(keywordId => ({
                     company_id: user.id,
                     keyword_id: keywordId,
-                    priority: requiredKeywords.includes(keywordId) ? 1 : 2 // 1: 필수, 2: 우대
+                    priority: 2 // 기본값으로 2 설정
                 }));
 
                 const { error: insertError } = await supabase
@@ -184,13 +142,6 @@ const CompanyKeywordsPage = () => {
             'Schedule': 'Work Schedule'
         };
         return names[category] || category;
-    };
-
-    // 키워드 타입 가져오기
-    const getKeywordType = (keywordId) => {
-        if (requiredKeywords.includes(keywordId)) return 'required';
-        if (preferredKeywords.includes(keywordId)) return 'preferred';
-        return null;
     };
 
     if (loading) {
@@ -258,41 +209,13 @@ const CompanyKeywordsPage = () => {
                 {/* Instructions */}
                 <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
                     <h2 className="text-2xl font-bold text-gray-800 mb-4">Set Your Requirements</h2>
-                    <div className="grid md:grid-cols-2 gap-4">
-                        <div className="flex items-start gap-3">
-                            <div className="w-8 h-8 bg-red-100 text-red-600 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
-                                R
-                            </div>
-                            <div>
-                                <h3 className="font-semibold text-gray-700">Required Keywords</h3>
-                                <p className="text-sm text-gray-600">Must-have skills and conditions. Candidates must match ALL of these.</p>
-                            </div>
-                        </div>
-                        <div className="flex items-start gap-3">
-                            <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
-                                P
-                            </div>
-                            <div>
-                                <h3 className="font-semibold text-gray-700">Preferred Keywords</h3>
-                                <p className="text-sm text-gray-600">Nice-to-have qualifications. Higher match rate if candidates have these.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="mt-4 flex items-center justify-between bg-gray-50 rounded-lg p-3">
-                        <div className="text-sm">
-                            <span className="text-gray-600">Required: </span>
-                            <span className="font-semibold text-red-600">{requiredKeywords.length}</span>
-                            <span className="text-gray-400 mx-2">|</span>
-                            <span className="text-gray-600">Preferred: </span>
-                            <span className="font-semibold text-blue-600">{preferredKeywords.length}</span>
-                            <span className="text-gray-400 mx-2">|</span>
-                            <span className="text-gray-600">Total: </span>
-                            <span className="font-semibold text-gray-700">{selectedKeywords.length}</span>
-                        </div>
-                        {requiredKeywords.length === 0 && (
-                            <p className="text-sm text-orange-500">⚠️ Select at least 1 required keyword</p>
-                        )}
+                    <p className="text-gray-600 mb-4">
+                        Select the keywords that best describe your job requirements.
+                        Candidates matching these keywords will be shown to you.
+                    </p>
+                    <div className="bg-gray-50 rounded-lg p-3">
+                        <span className="text-sm text-gray-600">Selected Keywords: </span>
+                        <span className="font-semibold text-[#1E4B7B]">{selectedKeywords.length}</span>
                     </div>
                 </div>
 
@@ -306,55 +229,19 @@ const CompanyKeywordsPage = () => {
                                     {getCategoryName(category)}
                                 </h3>
                                 <div className="flex flex-wrap gap-2">
-                                    {categoryKeywords.map((keyword) => {
-                                        const keywordType = getKeywordType(keyword.id);
-                                        return (
-                                            <div key={keyword.id} className="relative">
-                                                <button
-                                                    onClick={() => toggleKeyword(keyword.id)}
-                                                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                                                        keywordType === 'required'
-                                                            ? 'bg-red-100 text-red-700 border-2 border-red-300'
-                                                            : keywordType === 'preferred'
-                                                                ? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
-                                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                                    }`}
-                                                >
-                                                    {keyword.keyword}
-                                                </button>
-                                                {keywordType && (
-                                                    <div className="absolute -top-2 -right-2 flex gap-1">
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                toggleKeyword(keyword.id, 'required');
-                                                            }}
-                                                            className={`w-6 h-6 rounded-full text-xs font-bold transition-all ${
-                                                                keywordType === 'required'
-                                                                    ? 'bg-red-500 text-white'
-                                                                    : 'bg-gray-300 text-gray-600 hover:bg-red-200'
-                                                            }`}
-                                                        >
-                                                            R
-                                                        </button>
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                toggleKeyword(keyword.id, 'preferred');
-                                                            }}
-                                                            className={`w-6 h-6 rounded-full text-xs font-bold transition-all ${
-                                                                keywordType === 'preferred'
-                                                                    ? 'bg-blue-500 text-white'
-                                                                    : 'bg-gray-300 text-gray-600 hover:bg-blue-200'
-                                                            }`}
-                                                        >
-                                                            P
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
+                                    {categoryKeywords.map((keyword) => (
+                                        <button
+                                            key={keyword.id}
+                                            onClick={() => toggleKeyword(keyword.id)}
+                                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                                                selectedKeywords.includes(keyword.id)
+                                                    ? 'bg-[#1E4B7B] text-white'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            }`}
+                                        >
+                                            {keyword.keyword}
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
                         ))}
@@ -362,49 +249,22 @@ const CompanyKeywordsPage = () => {
 
                     {/* Selected Keywords Summary */}
                     {selectedKeywords.length > 0 && (
-                        <div className="mt-8 grid md:grid-cols-2 gap-4">
-                            {/* Required Keywords */}
-                            <div className="p-4 bg-red-50 rounded-lg">
-                                <h4 className="text-sm font-semibold text-red-900 mb-2">Required Keywords ({requiredKeywords.length}):</h4>
-                                <div className="flex flex-wrap gap-2">
-                                    {requiredKeywords.length > 0 ? (
-                                        requiredKeywords.map(keywordId => {
-                                            const keyword = Object.values(keywords).flat().find(k => k.id === keywordId);
-                                            return keyword ? (
-                                                <span
-                                                    key={keywordId}
-                                                    className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium"
-                                                >
-                          {keyword.keyword}
-                        </span>
-                                            ) : null;
-                                        })
-                                    ) : (
-                                        <span className="text-xs text-red-600">No required keywords selected</span>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Preferred Keywords */}
-                            <div className="p-4 bg-blue-50 rounded-lg">
-                                <h4 className="text-sm font-semibold text-blue-900 mb-2">Preferred Keywords ({preferredKeywords.length}):</h4>
-                                <div className="flex flex-wrap gap-2">
-                                    {preferredKeywords.length > 0 ? (
-                                        preferredKeywords.map(keywordId => {
-                                            const keyword = Object.values(keywords).flat().find(k => k.id === keywordId);
-                                            return keyword ? (
-                                                <span
-                                                    key={keywordId}
-                                                    className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium"
-                                                >
-                          {keyword.keyword}
-                        </span>
-                                            ) : null;
-                                        })
-                                    ) : (
-                                        <span className="text-xs text-blue-600">No preferred keywords selected</span>
-                                    )}
-                                </div>
+                        <div className="mt-8 p-4 bg-blue-50 rounded-lg">
+                            <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                                Selected Keywords ({selectedKeywords.length}):
+                            </h4>
+                            <div className="flex flex-wrap gap-2">
+                                {selectedKeywords.map(keywordId => {
+                                    const keyword = Object.values(keywords).flat().find(k => k.id === keywordId);
+                                    return keyword ? (
+                                        <span
+                                            key={keywordId}
+                                            className="px-3 py-1 bg-white text-gray-700 rounded-full text-xs font-medium border border-gray-200"
+                                        >
+                                            {keyword.keyword}
+                                        </span>
+                                    ) : null;
+                                })}
                             </div>
                         </div>
                     )}
@@ -419,7 +279,7 @@ const CompanyKeywordsPage = () => {
                         </button>
                         <button
                             onClick={handleSaveAndNext}
-                            disabled={saving || requiredKeywords.length === 0}
+                            disabled={saving || selectedKeywords.length === 0}
                             className="flex-1 py-3 bg-[#1E4B7B] text-white font-semibold rounded-lg hover:bg-[#164066] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {saving ? 'Saving...' : 'Next: Find Candidates'}

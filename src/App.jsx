@@ -8,6 +8,7 @@ import JobSeekerKeywordsPage from "./pages/jobseeker/JobSeekerKeywordsPage.jsx";
 import CompanyKeywordsPage from "./pages/employer/CompanyKeywordsPage.jsx";
 import CompanyMatchingPage from "./pages/employer/CompanyMatchingPage.jsx";
 import JobSeekerMatchingPage from "./pages/jobseeker/JobSeekerMatchingPage.jsx";
+import JobSeekerAdditionalInfoPage from "./pages/jobseeker/JobSeekerAdditionalInfoPage.jsx";
 
 function App() {
 
@@ -23,6 +24,7 @@ function App() {
                 <Route path="/employer/keywords" element={<CompanyKeywordsPage/>}/>
                 <Route path="/employer/matching" element={<CompanyMatchingPage/>}/>
                 <Route path="/jobseeker/matching" element={<JobSeekerMatchingPage/>}/>
+                <Route path="/jobseeker/additional" element={<JobSeekerAdditionalInfoPage/>}/>
             </Routes>
         </AuthProvider>
     </BrowserRouter>

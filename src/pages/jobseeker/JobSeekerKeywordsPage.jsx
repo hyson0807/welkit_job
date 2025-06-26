@@ -10,12 +10,14 @@ const JobSeekerKeywordsPage = () => {
     const navigate = useNavigate();
     const { user, signOut } = useAuth();
 
-    const [keywords, setKeywords] = useState([]);
+    const [keywords, setKeywords] = useState({
+        '필수': [],
+        '우대': [],
+        '희망조건': []
+    });
     const [selectedKeywords, setSelectedKeywords] = useState([]);
-    const [existingKeywords, setExistingKeywords] = useState([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-
 
     // 모든 키워드 가져오기
     const fetchKeywords = async () => {
@@ -23,19 +25,16 @@ const JobSeekerKeywordsPage = () => {
             const { data, error } = await supabase
                 .from('keyword')
                 .select('*')
-                .order('category', { ascending: true })
                 .order('keyword', { ascending: true });
 
             if (error) throw error;
 
-            // 카테고리별로 그룹핑
-            const groupedKeywords = data.reduce((acc, keyword) => {
-                if (!acc[keyword.category]) {
-                    acc[keyword.category] = [];
-                }
-                acc[keyword.category].push(keyword);
-                return acc;
-            }, {});
+            // category별로 그룹핑
+            const groupedKeywords = {
+                '필수': data.filter(k => k.category === '필수'),
+                '우대': data.filter(k => k.category === '우대'),
+                '희망조건': data.filter(k => k.category === '희망조건')
+            };
 
             setKeywords(groupedKeywords);
         } catch (error) {
@@ -54,7 +53,6 @@ const JobSeekerKeywordsPage = () => {
             if (error) throw error;
 
             const keywordIds = data.map(item => item.keyword_id);
-            setExistingKeywords(keywordIds);
             setSelectedKeywords(keywordIds);
         } catch (error) {
             console.error('Error fetching user keywords:', error);
@@ -64,9 +62,11 @@ const JobSeekerKeywordsPage = () => {
     };
 
     useEffect(() => {
-        fetchKeywords();
-        fetchUserKeywords();
-    }, [user, navigate]);
+        if (user) {
+            fetchKeywords();
+            fetchUserKeywords();
+        }
+    }, [user]);
 
     if (isLoading) {return <div>Loading...</div>;}
     if (!isAuthorized) {return null;}
@@ -80,6 +80,16 @@ const JobSeekerKeywordsPage = () => {
                 return [...prev, keywordId];
             }
         });
+    };
+
+    // priority 값 결정
+    const getPriority = (category) => {
+        switch(category) {
+            case '필수': return 0;
+            case '우대': return 1;
+            case '희망조건': return 3;
+            default: return 1;
+        }
     };
 
     // 키워드 저장
@@ -97,11 +107,16 @@ const JobSeekerKeywordsPage = () => {
 
             // 새로운 키워드 삽입
             if (selectedKeywords.length > 0) {
-                const userKeywords = selectedKeywords.map((keywordId, index) => ({
-                    user_id: user.id,
-                    keyword_id: keywordId,
-                    priority: index + 1  // priority는 선택 순서로 설정 (나중에 활용 가능)
-                }));
+                // 선택된 키워드의 정보를 가져와서 priority 설정
+                const allKeywords = Object.values(keywords).flat();
+                const userKeywords = selectedKeywords.map(keywordId => {
+                    const keyword = allKeywords.find(k => k.id === keywordId);
+                    return {
+                        user_id: user.id,
+                        keyword_id: keywordId,
+                        priority: getPriority(keyword?.category)
+                    };
+                });
 
                 const { error: insertError } = await supabase
                     .from('user_keyword')
@@ -111,7 +126,7 @@ const JobSeekerKeywordsPage = () => {
             }
 
             // 매칭 페이지로 이동
-            navigate('/jobseeker/matching');
+            navigate('/jobseeker/additional');
         } catch (error) {
             console.error('Error saving keywords:', error);
             alert('Failed to save keywords. Please try again.');
@@ -124,30 +139,9 @@ const JobSeekerKeywordsPage = () => {
         await signOut();
     };
 
-    // 카테고리별 아이콘
-    const getCategoryIcon = (category) => {
-        const icons = {
-            'Skills': '💪',
-            'Experience': '🏭',
-            'Conditions': '🎯',
-            'Benefits': '💰',
-            'Location': '📍',
-            'Schedule': '⏰'
-        };
-        return icons[category] || '📌';
-    };
-
-    // 카테고리 이름 한글화 (필요시 사용)
-    const getCategoryName = (category) => {
-        const names = {
-            'Skills': 'Skills & Strengths',
-            'Experience': 'Work Experience',
-            'Conditions': 'Working Conditions',
-            'Benefits': 'Benefits & Welfare',
-            'Location': 'Location',
-            'Schedule': 'Work Schedule'
-        };
-        return names[category] || category;
+    // 카테고리별 선택된 키워드 수 계산
+    const getSelectedCount = (category) => {
+        return keywords[category].filter(k => selectedKeywords.includes(k.id)).length;
     };
 
     if (loading) {
@@ -226,55 +220,86 @@ const JobSeekerKeywordsPage = () => {
                         </div>
                     </div>
 
-                    {/* Keywords by Category */}
-                    <div className="space-y-6">
-                        {Object.entries(keywords).map(([category, categoryKeywords]) => (
-                            <div key={category} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                                <h3 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                                    <span className="text-2xl">{getCategoryIcon(category)}</span>
-                                    {getCategoryName(category)}
-                                    <span className="text-sm font-normal text-gray-500">
-                    ({categoryKeywords.filter(k => selectedKeywords.includes(k.id)).length}/{categoryKeywords.length})
-                  </span>
-                                </h3>
-                                <div className="flex flex-wrap gap-2">
-                                    {categoryKeywords.map((keyword) => (
-                                        <button
-                                            key={keyword.id}
-                                            onClick={() => toggleKeyword(keyword.id)}
-                                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                                                selectedKeywords.includes(keyword.id)
-                                                    ? 'bg-[#1E4B7B] text-white shadow-md transform scale-105'
-                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                            }`}
-                                        >
-                                            {keyword.keyword}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Selected Keywords Summary */}
-                    {selectedKeywords.length > 0 && (
-                        <div className="mt-8 p-4 bg-blue-50 rounded-lg">
-                            <h4 className="text-sm font-semibold text-blue-900 mb-2">Your Selected Keywords:</h4>
+                    {/* 필수 Keywords */}
+                    <div className="mb-6">
+                        <div className="border rounded-lg p-4 bg-red-50">
+                            <h3 className="text-lg font-semibold text-red-700 mb-3">
+                                필수 (Required)
+                                <span className="text-sm font-normal text-red-600 ml-2">
+                                    ({getSelectedCount('필수')}/{keywords['필수'].length})
+                                </span>
+                            </h3>
                             <div className="flex flex-wrap gap-2">
-                                {selectedKeywords.map(keywordId => {
-                                    const keyword = Object.values(keywords).flat().find(k => k.id === keywordId);
-                                    return keyword ? (
-                                        <span
-                                            key={keywordId}
-                                            className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium"
-                                        >
-                      {keyword.keyword}
-                    </span>
-                                    ) : null;
-                                })}
+                                {keywords['필수'].map((keyword) => (
+                                    <button
+                                        key={keyword.id}
+                                        onClick={() => toggleKeyword(keyword.id)}
+                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                                            selectedKeywords.includes(keyword.id)
+                                                ? 'bg-red-500 text-white shadow-md'
+                                                : 'bg-white text-red-700 border border-red-300 hover:bg-red-100'
+                                        }`}
+                                    >
+                                        {keyword.keyword}
+                                    </button>
+                                ))}
                             </div>
                         </div>
-                    )}
+                    </div>
+
+                    {/* 우대 Keywords */}
+                    <div className="mb-6">
+                        <div className="border rounded-lg p-4 bg-blue-50">
+                            <h3 className="text-lg font-semibold text-blue-700 mb-3">
+                                우대 (Preferred)
+                                <span className="text-sm font-normal text-blue-600 ml-2">
+                                    ({getSelectedCount('우대')}/{keywords['우대'].length})
+                                </span>
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
+                                {keywords['우대'].map((keyword) => (
+                                    <button
+                                        key={keyword.id}
+                                        onClick={() => toggleKeyword(keyword.id)}
+                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                                            selectedKeywords.includes(keyword.id)
+                                                ? 'bg-blue-500 text-white shadow-md'
+                                                : 'bg-white text-blue-700 border border-blue-300 hover:bg-blue-100'
+                                        }`}
+                                    >
+                                        {keyword.keyword}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 희망조건 Keywords */}
+                    <div className="mb-6">
+                        <div className="border rounded-lg p-4 bg-green-50">
+                            <h3 className="text-lg font-semibold text-green-700 mb-3">
+                                희망조건 (Desired)
+                                <span className="text-sm font-normal text-green-600 ml-2">
+                                    ({getSelectedCount('희망조건')}/{keywords['희망조건'].length})
+                                </span>
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
+                                {keywords['희망조건'].map((keyword) => (
+                                    <button
+                                        key={keyword.id}
+                                        onClick={() => toggleKeyword(keyword.id)}
+                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                                            selectedKeywords.includes(keyword.id)
+                                                ? 'bg-green-500 text-white shadow-md'
+                                                : 'bg-white text-green-700 border border-green-300 hover:bg-green-100'
+                                        }`}
+                                    >
+                                        {keyword.keyword}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
 
                     {/* Buttons */}
                     <div className="mt-8 flex gap-4">
@@ -299,8 +324,8 @@ const JobSeekerKeywordsPage = () => {
                     <h4 className="text-sm font-semibold text-amber-900 mb-1">💡 Tips for Better Matching</h4>
                     <ul className="text-sm text-amber-800 space-y-1">
                         <li>• Select keywords that truly represent your skills and preferences</li>
+                        <li>• Required keywords show your essential skills</li>
                         <li>• More keywords = more matching opportunities</li>
-                        <li>• Be honest about your capabilities for better job matches</li>
                     </ul>
                 </div>
             </div>
