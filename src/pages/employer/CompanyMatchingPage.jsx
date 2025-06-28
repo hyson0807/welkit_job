@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../store/contexts/AuthContext';
 import { supabase } from '../../services/supabase/client';
 import {useCheckUserType} from "../auth/checkUserType.js";
+import axios from "axios";
 
 const CompanyMatchingPage = () => {
     const { isAuthorized, isLoading } = useCheckUserType('company');
@@ -150,9 +151,38 @@ const CompanyMatchingPage = () => {
         await signOut();
     };
 
-    const handleSendMessage = (candidateId) => {
-        console.log('Send message to candidate:', candidateId);
-        // TODO: 메시지 보내기 기능 구현
+    const handleSendMessage = async (candidateId) => {
+        // 메시지 보내기 기능 구현
+
+        //유저 번호 찾기
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('phone_number')
+            .eq('id', candidateId)
+            .single();
+
+        if(error || !data || !data.phone_number) {
+            alert('등록되지 않은 유저입니다. 다른 유저를 선택해 주세요');
+            console.error('유저 정보 조회 오류:', error);
+            return;
+        }
+
+        try{
+            const response = await axios.post('https://1232-production.up.railway.app/send-message-to-user', {
+                company_id: user.id,
+                user_number: data.phone_number  // data 객체에서 phone_number 추출
+            });
+
+            if(response.data.success) {
+                alert('구직자에게 회사정보가 전달되었습니다.');
+                navigate('/');
+            } else {
+                alert('메시지 전송에 실패했습니다. 다시 시도해주세요.');
+            }
+        } catch (error) {
+            console.error('메시지 전송 오류:', error);
+            alert('메시지 전송 중 오류가 발생했습니다.');
+        }
     };
 
     if (loading) {
