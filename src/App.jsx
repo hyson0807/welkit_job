@@ -9,6 +9,8 @@ import CompanyKeywordsPage from "./pages/employer/CompanyKeywordsPage.jsx";
 import CompanyMatchingPage from "./pages/employer/CompanyMatchingPage.jsx";
 import JobSeekerMatchingPage from "./pages/jobseeker/JobSeekerMatchingPage.jsx";
 import JobSeekerAdditionalInfoPage from "./pages/jobseeker/JobSeekerAdditionalInfoPage.jsx";
+import JobSeekerResumePreviewPage from "./pages/jobseeker/JobSeekerResumePreviewPage.jsx";
+import CompanyJobPreviewPage from "./pages/employer/CompanyJobPreviewPage.jsx";
 
 function App() {
 
@@ -25,6 +27,8 @@ function App() {
                 <Route path="/employer/matching" element={<CompanyMatchingPage/>}/>
                 <Route path="/jobseeker/matching" element={<JobSeekerMatchingPage/>}/>
                 <Route path="/jobseeker/additional" element={<JobSeekerAdditionalInfoPage/>}/>
+                <Route path="/jobseeker/resume-preview" element={<JobSeekerResumePreviewPage/>}/>
+                <Route path="/employer/job-preview" element={<CompanyJobPreviewPage/>}/>
             </Routes>
         </AuthProvider>
     </BrowserRouter>

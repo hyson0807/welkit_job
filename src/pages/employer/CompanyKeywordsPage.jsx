@@ -105,7 +105,7 @@ const CompanyKeywordsPage = () => {
             }
 
             // 매칭 페이지로 이동
-            navigate('/employer/matching');
+            navigate('/employer/job-preview');
         } catch (error) {
             console.error('Error saving keywords:', error);
             alert('Failed to save requirements. Please try again.');
@@ -282,7 +282,7 @@ const CompanyKeywordsPage = () => {
                             disabled={saving || selectedKeywords.length === 0}
                             className="flex-1 py-3 bg-[#1E4B7B] text-white font-semibold rounded-lg hover:bg-[#164066] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {saving ? 'Saving...' : 'Next: Find Candidates'}
+                            {saving ? 'Saving...' : '면접 템플릿 미리보기'}
                         </button>
                     </div>
                 </div>

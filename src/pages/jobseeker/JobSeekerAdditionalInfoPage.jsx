@@ -80,7 +80,7 @@ const JobSeekerAdditionalInfoPage = () => {
             if (error) throw error;
 
             // 매칭 페이지로 이동
-            navigate('/jobseeker/matching');
+            navigate('/jobseeker/resume-preview');
         } catch (error) {
             console.error('Error saving profile:', error);
             alert('Failed to save information. Please try again.');
@@ -275,7 +275,7 @@ const JobSeekerAdditionalInfoPage = () => {
                             disabled={saving || !formData.korean_level || !formData.available_date || !formData.description}
                             className="flex-1 py-3 bg-[#1E4B7B] text-white font-semibold rounded-lg hover:bg-[#164066] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {saving ? 'Saving...' : 'Next: View Matches'}
+                            {saving ? 'Saving...' : '내 이력서 확인'}
                         </button>
                     </div>
                 </div>
