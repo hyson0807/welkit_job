@@ -4,11 +4,14 @@ import {useCheckUserType} from "../auth/checkUserType.js";
 import {useNavigate} from "react-router-dom";
 import {useAuth} from "../../store/contexts/AuthContext.jsx";
 import {supabase} from "../../services/supabase/client.js";
+import axios from "axios";
 
 const JobSeekerKeywordsPage = () => {
     const { isAuthorized, isLoading } = useCheckUserType('user');
     const navigate = useNavigate();
     const { user, signOut } = useAuth();
+
+    // 기존 상태
     const [keywords, setKeywords] = useState({
         '직무': [],
         '지역': [],
@@ -17,6 +20,17 @@ const JobSeekerKeywordsPage = () => {
     const [selectedKeywords, setSelectedKeywords] = useState([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+
+    // AI 기능을 위한 추가 상태
+    const [selfDescription, setSelfDescription] = useState('');
+    const [extracting, setExtracting] = useState(false);
+    const [showManualSelection, setShowManualSelection] = useState(false);
+
+    // 선택된 키워드 객체들을 가져오는 함수
+    const getSelectedKeywordObjects = () => {
+        const allKeywordsList = [...keywords['직무'], ...keywords['지역'], ...keywords['혜택']];
+        return allKeywordsList.filter(keyword => selectedKeywords.includes(keyword.id));
+    };
 
     // 모든 키워드 가져오기
     const fetchKeywords = async () => {
@@ -51,12 +65,8 @@ const JobSeekerKeywordsPage = () => {
 
             if (error) throw error;
 
-            // keyword_id 배열로 변환 (이 부분이 중요!)
             const keywordIds = data.map(item => item.keyword_id);
             setSelectedKeywords(keywordIds);
-
-            // 이 줄 제거 (중복됨)
-            // setSelectedKeywords(data);
         } catch (error) {
             console.error('Error fetching user keywords:', error);
         } finally {
@@ -79,6 +89,32 @@ const JobSeekerKeywordsPage = () => {
         return null;
     }
 
+    // AI 키워드 추출
+    const handleExtractKeywords = async () => {
+        if (!selfDescription.trim()) {
+            alert('자기소개를 입력해주세요.');
+            return;
+        }
+
+        setExtracting(true);
+        try {
+            const response = await axios.post('https://1232-production.up.railway.app/extract-jobseeker-keywords', {
+                user_id: user.id,
+                self_description: selfDescription
+            });
+
+            if (response.data.success) {
+                setSelectedKeywords(response.data.keywordIds);
+                alert('키워드가 성공적으로 추출되었습니다!');
+            }
+        } catch (error) {
+            console.error('Error extracting keywords:', error);
+            alert('키워드 추출에 실패했습니다. 다시 시도해주세요.');
+        } finally {
+            setExtracting(false);
+        }
+    };
+
     // 키워드 선택/해제
     const toggleKeyword = (keywordId) => {
         setSelectedKeywords(prev => {
@@ -90,7 +126,7 @@ const JobSeekerKeywordsPage = () => {
         });
     };
 
-    // 수정된 코드
+    // 키워드 저장 및 다음 단계
     const handleSaveAndNext = async () => {
         try {
             setSaving(true);
@@ -105,13 +141,10 @@ const JobSeekerKeywordsPage = () => {
 
             // 새로운 키워드 삽입
             if (selectedKeywords.length > 0) {
-                // 선택된 키워드를 올바른 형식으로 변환
                 const userKeywords = selectedKeywords.map(keywordId => ({
                     user_id: user.id,
-                    keyword_id: parseInt(keywordId) // 숫자로 변환
+                    keyword_id: parseInt(keywordId)
                 }));
-
-                console.log('Inserting keywords:', userKeywords); // 디버깅용
 
                 const { error: insertError } = await supabase
                     .from('user_keyword')
@@ -139,6 +172,9 @@ const JobSeekerKeywordsPage = () => {
     const getSelectedCount = (category) => {
         return keywords[category].filter(k => selectedKeywords.includes(k.id)).length;
     };
+
+    // 현재 선택된 키워드 객체들
+    const currentSelectedKeywords = getSelectedKeywordObjects();
 
     if (loading) {
         return (
@@ -202,129 +238,210 @@ const JobSeekerKeywordsPage = () => {
 
             {/* Keywords Selection */}
             <div className="max-w-4xl mx-auto px-5 py-8">
-                <div className="bg-white rounded-2xl shadow-lg p-8">
-                    <div className="mb-6">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">키워드를 선택해주세요</h2>
-                        <p className="text-gray-600">나의 능력과 선호도에 맞는 키워드를 선택하세요</p>
-                        <div className="mt-4 flex items-center justify-between">
-                            <p className="text-sm text-gray-500">
-                                선택됨: <span className="font-semibold text-blue-600">{selectedKeywords.length}</span>개
+                {/* AI Input Section */}
+                <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
+                    <div className="flex items-center gap-3 mb-6">
+                        <span className="text-3xl">🤖</span>
+                        <h2 className="text-2xl font-bold text-gray-800">AI로 키워드 추출하기</h2>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                자기소개를 입력해주세요
+                            </label>
+                            <textarea
+                                value={selfDescription}
+                                onChange={(e) => setSelfDescription(e.target.value)}
+                                placeholder="예시: 저는 베트남에서 온 25살 청년입니다. 한국어를 조금 할 수 있고, 베트남에서 식당 주방에서 2년간 일한 경험이 있습니다. 서울이나 경기 지역에서 일하고 싶고, 기숙사가 있는 곳이면 좋겠습니다. 성실하고 열심히 일할 자신이 있습니다."
+                                rows={5}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                            />
+                            <p className="mt-1 text-xs text-gray-500">
+                                자신의 경험, 능력, 희망 근무지역 등을 자유롭게 작성해주세요.
                             </p>
-                            {selectedKeywords.length < 3 && (
-                                <p className="text-sm text-orange-500">⚠️ 더 나은 매칭을 위해 최소 3개 이상 선택하세요</p>
-                            )}
+                        </div>
+
+                        <div className="flex gap-4">
+                            <button
+                                onClick={handleExtractKeywords}
+                                disabled={extracting || !selfDescription.trim()}
+                                className="flex-1 py-3 bg-blue-900 text-white font-semibold rounded-lg hover:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                {extracting ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                        키워드 추출 중...
+                                    </>
+                                ) : (
+                                    <>
+                                        <span>🔍</span>
+                                        AI로 키워드 추출하기
+                                    </>
+                                )}
+                            </button>
+
+                            <button
+                                onClick={() => setShowManualSelection(!showManualSelection)}
+                                className="px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+                            >
+                                {showManualSelection ? '숨기기' : '수동 선택'}
+                            </button>
                         </div>
                     </div>
+                </div>
 
-                    {/* 직무 카테고리 */}
-                    <div className="mb-6">
-                        <div className="border rounded-lg p-4 bg-red-50">
-                            <h3 className="text-lg font-semibold text-red-700 mb-3 flex items-center">
-                                <Briefcase className="w-5 h-5 mr-2" />
-                                직무 (Job Type)
-                                <span className="text-sm font-normal text-red-600 ml-2">
-                                    ({getSelectedCount('직무')}/{keywords['직무'].length})
+                {/* Selected Keywords Display */}
+                {currentSelectedKeywords.length > 0 && (
+                    <div className="bg-green-50 rounded-2xl shadow-lg p-6 mb-6 border border-green-200">
+                        <h3 className="text-lg font-semibold text-green-800 mb-4 flex items-center gap-2">
+                            <span>✅</span>
+                            선택된 키워드 ({currentSelectedKeywords.length}개)
+                        </h3>
+                        <div className="flex flex-wrap gap-2 mb-4">
+                            {currentSelectedKeywords.map((keyword) => (
+                                <span
+                                    key={keyword.id}
+                                    className="px-4 py-2 bg-green-600 text-white rounded-full text-sm font-medium cursor-pointer hover:bg-green-700 transition-colors"
+                                    onClick={() => toggleKeyword(keyword.id)}
+                                    title="클릭하여 제거"
+                                >
+                                    {keyword.keyword} ({keyword.category}) ✕
                                 </span>
-                            </h3>
-                            <div className="flex flex-wrap gap-2">
-                                {keywords['직무'].map((keyword) => (
-                                    <button
-                                        key={keyword.id}
-                                        onClick={() => toggleKeyword(keyword.id)}
-                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                                            selectedKeywords.includes(keyword.id)
-                                                ? 'bg-red-500 text-white shadow-md transform scale-105'
-                                                : 'bg-white text-red-700 border border-red-300 hover:bg-red-100'
-                                        }`}
-                                    >
-                                        {keyword.keyword}
-                                    </button>
-                                ))}
+                            ))}
+                        </div>
+                        <p className="text-sm text-green-700">
+                            💡 키워드를 클릭하면 제거할 수 있습니다. 더 나은 매칭을 위해 최소 3개 이상 선택하세요.
+                        </p>
+                    </div>
+                )}
+
+                {/* Manual Selection */}
+                {showManualSelection && (
+                    <div className="bg-white rounded-2xl shadow-lg p-8">
+                        <div className="mb-6">
+                            <h2 className="text-2xl font-bold text-gray-800 mb-2">키워드를 선택해주세요</h2>
+                            <p className="text-gray-600">나의 능력과 선호도에 맞는 키워드를 선택하세요</p>
+                            <div className="mt-4 flex items-center justify-between">
+                                <p className="text-sm text-gray-500">
+                                    선택됨: <span className="font-semibold text-blue-600">{selectedKeywords.length}</span>개
+                                </p>
+                                {selectedKeywords.length < 3 && (
+                                    <p className="text-sm text-orange-500">⚠️ 더 나은 매칭을 위해 최소 3개 이상 선택하세요</p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* 직무 카테고리 */}
+                        <div className="mb-6">
+                            <div className="border rounded-lg p-4 bg-red-50">
+                                <h3 className="text-lg font-semibold text-red-700 mb-3 flex items-center">
+                                    <Briefcase className="w-5 h-5 mr-2" />
+                                    직무 (Job Type)
+                                    <span className="text-sm font-normal text-red-600 ml-2">
+                                        ({getSelectedCount('직무')}/{keywords['직무'].length})
+                                    </span>
+                                </h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {keywords['직무'].map((keyword) => (
+                                        <button
+                                            key={keyword.id}
+                                            onClick={() => toggleKeyword(keyword.id)}
+                                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                                                selectedKeywords.includes(keyword.id)
+                                                    ? 'bg-red-500 text-white shadow-md transform scale-105'
+                                                    : 'bg-white text-red-700 border border-red-300 hover:bg-red-100'
+                                            }`}
+                                        >
+                                            {keyword.keyword}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 지역 카테고리 */}
+                        <div className="mb-6">
+                            <div className="border rounded-lg p-4 bg-blue-50">
+                                <h3 className="text-lg font-semibold text-blue-700 mb-3 flex items-center">
+                                    <MapPin className="w-5 h-5 mr-2" />
+                                    지역 (Location)
+                                    <span className="text-sm font-normal text-blue-600 ml-2">
+                                        ({getSelectedCount('지역')}/{keywords['지역'].length})
+                                    </span>
+                                </h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {keywords['지역'].map((keyword) => (
+                                        <button
+                                            key={keyword.id}
+                                            onClick={() => toggleKeyword(keyword.id)}
+                                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                                                selectedKeywords.includes(keyword.id)
+                                                    ? 'bg-blue-500 text-white shadow-md transform scale-105'
+                                                    : 'bg-white text-blue-700 border border-blue-300 hover:bg-blue-100'
+                                            }`}
+                                        >
+                                            {keyword.keyword}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 혜택 카테고리 */}
+                        <div className="mb-6">
+                            <div className="border rounded-lg p-4 bg-green-50">
+                                <h3 className="text-lg font-semibold text-green-700 mb-3 flex items-center">
+                                    <Gift className="w-5 h-5 mr-2" />
+                                    혜택 (Benefits)
+                                    <span className="text-sm font-normal text-green-600 ml-2">
+                                        ({getSelectedCount('혜택')}/{keywords['혜택'].length})
+                                    </span>
+                                </h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {keywords['혜택'].map((keyword) => (
+                                        <button
+                                            key={keyword.id}
+                                            onClick={() => toggleKeyword(keyword.id)}
+                                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                                                selectedKeywords.includes(keyword.id)
+                                                    ? 'bg-green-500 text-white shadow-md transform scale-105'
+                                                    : 'bg-white text-green-700 border border-green-300 hover:bg-green-100'
+                                            }`}
+                                        >
+                                            {keyword.keyword}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>
+                )}
 
-                    {/* 지역 카테고리 */}
-                    <div className="mb-6">
-                        <div className="border rounded-lg p-4 bg-blue-50">
-                            <h3 className="text-lg font-semibold text-blue-700 mb-3 flex items-center">
-                                <MapPin className="w-5 h-5 mr-2" />
-                                지역 (Location)
-                                <span className="text-sm font-normal text-blue-600 ml-2">
-                                    ({getSelectedCount('지역')}/{keywords['지역'].length})
-                                </span>
-                            </h3>
-                            <div className="flex flex-wrap gap-2">
-                                {keywords['지역'].map((keyword) => (
-                                    <button
-                                        key={keyword.id}
-                                        onClick={() => toggleKeyword(keyword.id)}
-                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                                            selectedKeywords.includes(keyword.id)
-                                                ? 'bg-blue-500 text-white shadow-md transform scale-105'
-                                                : 'bg-white text-blue-700 border border-blue-300 hover:bg-blue-100'
-                                        }`}
-                                    >
-                                        {keyword.keyword}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* 혜택 카테고리 */}
-                    <div className="mb-6">
-                        <div className="border rounded-lg p-4 bg-green-50">
-                            <h3 className="text-lg font-semibold text-green-700 mb-3 flex items-center">
-                                <Gift className="w-5 h-5 mr-2" />
-                                혜택 (Benefits)
-                                <span className="text-sm font-normal text-green-600 ml-2">
-                                    ({getSelectedCount('혜택')}/{keywords['혜택'].length})
-                                </span>
-                            </h3>
-                            <div className="flex flex-wrap gap-2">
-                                {keywords['혜택'].map((keyword) => (
-                                    <button
-                                        key={keyword.id}
-                                        onClick={() => toggleKeyword(keyword.id)}
-                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                                            selectedKeywords.includes(keyword.id)
-                                                ? 'bg-green-500 text-white shadow-md transform scale-105'
-                                                : 'bg-white text-green-700 border border-green-300 hover:bg-green-100'
-                                        }`}
-                                    >
-                                        {keyword.keyword}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Buttons */}
-                    <div className="mt-8 flex gap-4">
-                        <button
-                            onClick={() => alert('이전 페이지로 이동')}
-                            className="flex-1 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
-                        >
-                            <ChevronLeft className="w-5 h-5" />
-                            뒤로
-                        </button>
-                        <button
-                            onClick={handleSaveAndNext}
-                            disabled={saving || selectedKeywords.length === 0}
-                            className="flex-1 py-3 bg-blue-900 text-white font-semibold rounded-lg hover:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {saving ? '저장 중...' : '다음: 매칭 결과 보기'}
-                        </button>
-                    </div>
+                {/* Buttons */}
+                <div className="mt-8 flex gap-4">
+                    <button
+                        onClick={() => navigate('/jobseeker/info')}
+                        className="flex-1 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                    >
+                        <ChevronLeft className="w-5 h-5" />
+                        뒤로
+                    </button>
+                    <button
+                        onClick={handleSaveAndNext}
+                        disabled={saving || selectedKeywords.length === 0}
+                        className="flex-1 py-3 bg-blue-900 text-white font-semibold rounded-lg hover:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {saving ? '저장 중...' : '다음: 추가 정보'}
+                    </button>
                 </div>
 
                 {/* Tips */}
                 <div className="mt-6 bg-amber-50 border border-amber-200 rounded-lg p-4">
                     <h4 className="text-sm font-semibold text-amber-900 mb-1">💡 더 나은 매칭을 위한 팁</h4>
                     <ul className="text-sm text-amber-800 space-y-1">
+                        <li>• AI 추출을 사용하면 자기소개에 맞는 키워드를 자동으로 선택해줍니다</li>
                         <li>• 본인의 능력과 선호도를 정확히 나타내는 키워드를 선택하세요</li>
-                        <li>• 직무 키워드는 가장 중요한 매칭 기준입니다</li>
                         <li>• 더 많은 키워드 = 더 많은 매칭 기회</li>
                     </ul>
                 </div>
