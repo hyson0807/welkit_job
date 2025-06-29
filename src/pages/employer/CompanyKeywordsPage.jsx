@@ -19,6 +19,11 @@ const CompanyKeywordsPage = () => {
     const [allKeywords, setAllKeywords] = useState({});
     const [selectedKeywords, setSelectedKeywords] = useState([]);
 
+    const getSelectedKeywordObjects = () => {
+        const allKeywordsList = Object.values(allKeywords).flat();
+        return allKeywordsList.filter(keyword => selectedKeywords.includes(keyword.id));
+    };
+
     // 모든 키워드 가져오기 (수동 선택용)
     const fetchAllKeywords = async () => {
         try {
@@ -172,6 +177,8 @@ const CompanyKeywordsPage = () => {
         return icons[category] || '📌';
     };
 
+    const currentSelectedKeywords = getSelectedKeywordObjects();
+
     if (loading) {
         return (
             <div className="min-h-screen bg-[#F6F6F4] flex items-center justify-center">
@@ -287,25 +294,26 @@ const CompanyKeywordsPage = () => {
                     </div>
                 </div>
 
-                {/* Extracted Keywords Display */}
-                {extractedKeywords.length > 0 && (
+                {currentSelectedKeywords.length > 0 && (
                     <div className="bg-green-50 rounded-2xl shadow-lg p-6 mb-6 border border-green-200">
                         <h3 className="text-lg font-semibold text-green-800 mb-4 flex items-center gap-2">
                             <span>✅</span>
-                            AI가 추출한 키워드 ({extractedKeywords.length}개)
+                            선택된 키워드 ({currentSelectedKeywords.length}개)
                         </h3>
                         <div className="flex flex-wrap gap-2 mb-4">
-                            {extractedKeywords.map((keyword) => (
+                            {currentSelectedKeywords.map((keyword) => (
                                 <span
                                     key={keyword.id}
-                                    className="px-4 py-2 bg-green-600 text-white rounded-full text-sm font-medium"
+                                    className="px-4 py-2 bg-green-600 text-white rounded-full text-sm font-medium cursor-pointer hover:bg-green-700 transition-colors"
+                                    onClick={() => toggleKeyword(keyword.id)}
+                                    title="클릭하여 제거"
                                 >
-                                    {keyword.keyword} ({keyword.category})
+                                    {keyword.keyword} ({keyword.category}) ✕
                                 </span>
                             ))}
                         </div>
                         <p className="text-sm text-green-700">
-                            💡 키워드가 마음에 들지 않으시면 설명을 수정하여 다시 추출하거나, 아래에서 수동으로 선택할 수 있습니다.
+                            💡 키워드를 클릭하면 제거할 수 있습니다. 아래에서 더 추가할 수도 있습니다.
                         </p>
                     </div>
                 )}
