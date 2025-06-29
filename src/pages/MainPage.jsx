@@ -7,7 +7,7 @@ const MainPage = () => {
     const [language, setLanguage] = useState('en');
     const [showLanguageMenu, setShowLanguageMenu] = useState(false);
     const navigate = useNavigate();
-    const { user, signOut } = useAuth();
+    const {  signOut } = useAuth();
 
     const languages = [
         { code: 'en', name: 'English', flag: '🇺🇸' },
@@ -136,6 +136,21 @@ const MainPage = () => {
                             <span>✓ Real-time Alerts</span>
                         </div>
                     </div>
+                </div>
+
+                {/* 공고보기 버튼 추가 */}
+                <div className="mt-8">
+                    <button
+                        onClick={() => navigate('/companies')}
+                        className="w-full py-4 bg-gradient-to-r from-gray-700 to-gray-900 text-white font-bold rounded-2xl hover:from-gray-800 hover:to-black transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center gap-3"
+                    >
+                        <span className="text-xl">📋</span>
+                        <span className="text-lg">채용 공고 보기</span>
+                        <span className="text-sm opacity-80">(View Job Listings)</span>
+                    </button>
+                    <p className="text-center text-xs text-gray-600 mt-2">
+                        로그인 없이도 등록된 회사들을 확인할 수 있습니다
+                    </p>
                 </div>
 
                 {/* Stats Container */}
