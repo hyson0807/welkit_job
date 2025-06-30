@@ -3,7 +3,7 @@ import { Phone, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import {useNavigate} from "react-router-dom";
 import {supabase} from "../services/supabase/client.js";
 
-const PhoneAuthForm = ({ userType = 'user' }) => {
+const PhoneAuthForm = ({ userType  }) => {
     const [phone, setPhone] = useState('');
     const [otp, setOtp] = useState('');
     const [loading, setLoading] = useState(false);
