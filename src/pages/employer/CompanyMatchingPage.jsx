@@ -175,7 +175,7 @@ const CompanyMatchingPage = () => {
 
             if(response.data.success) {
                 alert('구직자에게 회사정보가 전달되었습니다.');
-                navigate('/');
+                navigate('/employer/dashboard');
             } else {
                 alert('메시지 전송에 실패했습니다. 다시 시도해주세요.');
             }
@@ -206,11 +206,10 @@ const CompanyMatchingPage = () => {
                         <p className="text-sm opacity-80 mt-1">Candidates matching your requirements</p>
                     </div>
                     <button
-                        onClick={handleLogout}
+                        onClick={() => navigate('/employer/dashboard')}
                         className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
                     >
-                        <span>🚪</span>
-                        <span className="text-sm font-medium">Logout</span>
+                        <span className="text-sm font-medium">홈</span>
                     </button>
                 </div>
             </div>

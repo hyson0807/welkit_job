@@ -200,11 +200,10 @@ const CompanyKeywordsPage = () => {
                         <p className="text-sm opacity-80 mt-1">Step 2: Set Requirements</p>
                     </div>
                     <button
-                        onClick={handleLogout}
+                        onClick={() => navigate('/employer/dashboard')}
                         className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
                     >
-                        <span>🚪</span>
-                        <span className="text-sm font-medium">Logout</span>
+                        <span className="text-sm font-medium">홈</span>
                     </button>
                 </div>
             </div>

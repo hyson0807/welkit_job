@@ -143,11 +143,10 @@ const CompanyJobPreviewPage = () => {
                         <p className="text-sm opacity-80 mt-1">구직자에게 보여질 채용 정보를 확인하세요</p>
                     </div>
                     <button
-                        onClick={handleLogout}
+                        onClick={() => navigate('/employer/dashboard')}
                         className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
                     >
-                        <span>🚪</span>
-                        <span className="text-sm font-medium">Logout</span>
+                        <span className="text-sm font-medium">홈</span>
                     </button>
                 </div>
             </div>

@@ -114,11 +114,11 @@ const JobSeekerAdditionalInfoPage = () => {
                         <p className="text-sm opacity-80 mt-1">Step 3: Additional Information</p>
                     </div>
                     <button
-                        onClick={handleLogout}
+                        onClick={() => navigate('/jobseeker/dashboard')}
                         className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
                     >
-                        <span>🚪</span>
-                        <span className="text-sm font-medium">Logout</span>
+                        {/*<Home className="w-4 h-4" />*/}
+                        <span className="text-sm font-medium">홈</span>
                     </button>
                 </div>
             </div>

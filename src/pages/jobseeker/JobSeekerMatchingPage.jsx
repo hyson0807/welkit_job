@@ -166,7 +166,7 @@ const JobSeekerMatchingPage = () => {
 
             if(response.data.success) {
                 alert('회사로 지원메세지가 전달되었습니다. 고객님 번호로 회사에서 연락드리겠습니다');
-                navigate('/');
+                navigate('/jobseeker/dashboard');
             } else {
                 alert('메시지 전송에 실패했습니다. 다시 시도해주세요.');
             }
@@ -197,11 +197,11 @@ const JobSeekerMatchingPage = () => {
                         <p className="text-sm opacity-80 mt-1">Companies matching your profile</p>
                     </div>
                     <button
-                        onClick={handleLogout}
+                        onClick={() => navigate('/jobseeker/dashboard')}
                         className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
                     >
-                        <span>🚪</span>
-                        <span className="text-sm font-medium">Logout</span>
+                        {/*<Home className="w-4 h-4" />*/}
+                        <span className="text-sm font-medium">홈</span>
                     </button>
                 </div>
             </div>
