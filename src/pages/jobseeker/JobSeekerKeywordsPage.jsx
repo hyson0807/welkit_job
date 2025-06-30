@@ -58,6 +58,7 @@ const JobSeekerKeywordsPage = () => {
     // 기존에 선택한 키워드 가져오기
     const fetchUserKeywords = async () => {
         try {
+            // 기존 키워드 가져오기
             const { data, error } = await supabase
                 .from('user_keyword')
                 .select('keyword_id')
@@ -67,6 +68,17 @@ const JobSeekerKeywordsPage = () => {
 
             const keywordIds = data.map(item => item.keyword_id);
             setSelectedKeywords(keywordIds);
+
+            // 기존 자기소개 가져오기
+            const { data: profileData, error: profileError } = await supabase
+                .from('profiles')
+                .select('description')
+                .eq('id', user.id)
+                .single();
+
+            if (profileData && profileData.description) {
+                setSelfDescription(profileData.description);
+            }
         } catch (error) {
             console.error('Error fetching user keywords:', error);
         } finally {
@@ -151,6 +163,19 @@ const JobSeekerKeywordsPage = () => {
                     .insert(userKeywords);
 
                 if (insertError) throw insertError;
+            }
+
+            // 자기소개가 있으면 profiles 테이블에 저장
+            if (selfDescription.trim()) {
+                const { error: profileError } = await supabase
+                    .from('profiles')
+                    .update({ description: selfDescription })
+                    .eq('id', user.id);
+
+                if (profileError) {
+                    console.error('Error updating profile:', profileError);
+                    // 에러가 있어도 계속 진행
+                }
             }
 
             // 매칭 페이지로 이동
