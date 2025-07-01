@@ -314,42 +314,38 @@ const JobSeekerDashboard = () => {
                             )}
                         </div>
 
-                        {/* Recent Activity */}
-                        <div className="bg-white rounded-2xl shadow-lg p-6">
-                            <h2 className="text-xl font-bold text-gray-800 mb-4">Recent Activity</h2>
-                            <div className="space-y-4">
-                                <div className="flex items-start gap-3 pb-4 border-b">
-                                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                        <Bell className="w-4 h-4 text-blue-600" />
+                        {/* Getting Started / Welcome Card for New Users */}
+                        {profileCompletion < 30 && (
+                            <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl shadow-lg p-6 border border-blue-200">
+                                <div className="text-center">
+                                    <div className="w-16 h-16 bg-white rounded-full mx-auto mb-4 flex items-center justify-center shadow-md">
+                                        <Star className="w-8 h-8 text-blue-600" />
                                     </div>
-                                    <div className="flex-1">
-                                        <p className="text-sm font-medium text-gray-800">New match found!</p>
-                                        <p className="text-xs text-gray-600">ABC Company is looking for candidates like you</p>
-                                        <p className="text-xs text-gray-500 mt-1">2 hours ago</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-3 pb-4 border-b">
-                                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                        <FileText className="w-4 h-4 text-green-600" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-sm font-medium text-gray-800">Application sent</p>
-                                        <p className="text-xs text-gray-600">Your application to XYZ Corp was sent successfully</p>
-                                        <p className="text-xs text-gray-500 mt-1">1 day ago</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-3">
-                                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                                        <Star className="w-4 h-4 text-purple-600" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-sm font-medium text-gray-800">Profile updated</p>
-                                        <p className="text-xs text-gray-600">Your profile completion increased to {profileCompletion}%</p>
-                                        <p className="text-xs text-gray-500 mt-1">3 days ago</p>
+                                    <h2 className="text-2xl font-bold text-gray-800 mb-2">환영합니다! 🎉</h2>
+                                    <p className="text-gray-600 mb-6">
+                                        WelKit에서 당신에게 맞는 완벽한 일자리를 찾아보세요.<br/>
+                                        간단한 정보 입력으로 시작할 수 있습니다.
+                                    </p>
+                                    <button
+                                        onClick={() => navigate('/jobseeker/info')}
+                                        className="px-8 py-3 bg-gradient-to-r from-[#1E4B7B] to-[#2A5A8A] text-white font-semibold rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-200"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <FileText className="w-5 h-5" />
+                                            <span>프로필 작성 시작하기</span>
+                                        </div>
+                                    </button>
+                                    <div className="mt-6 space-y-2">
+                                        <p className="text-sm text-gray-600 font-medium">🚀 3단계로 시작하세요:</p>
+                                        <div className="text-sm text-gray-500 space-y-1">
+                                            <p>1️⃣ 기본 정보 입력 (이름, 국적 등)</p>
+                                            <p>2️⃣ 관심 분야 키워드 선택</p>
+                                            <p>3️⃣ 매칭된 회사 확인 및 지원</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* Tips */}
                         <div className="bg-blue-50 rounded-2xl p-6 border border-blue-200">

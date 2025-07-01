@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Phone, User, Calendar, Globe, CreditCard, MapPin } from 'lucide-react';
+import { User, Calendar, Globe, MapPin, Users, ToggleLeft } from 'lucide-react';
 import {useNavigate} from "react-router-dom";
 import {useAuth} from "../../store/contexts/AuthContext.jsx";
 import {useCheckUserType} from "../auth/checkUserType.js";
@@ -13,18 +13,14 @@ const JobSeekerInfoPage = () => {
         name: '',
         birth_date: '',
         nationality: '',
-        visa: '',
         location: '',
-        phone_number: ''
+        gender: '',
+        moveable: 0
     });
 
-    // 전화번호가 이미 등록되어 있는지 확인
-    const [hasPhoneNumber, setHasPhoneNumber] = useState(false);
     const navigate = useNavigate();
     const { user, signOut } = useAuth();
     const { isAuthorized, isLoading } = useCheckUserType('user');
-
-
 
     const fetchProfile = async () => {
         try {
@@ -46,13 +42,10 @@ const JobSeekerInfoPage = () => {
                     name: profile.name || '',
                     birth_date: profile.birth || '',
                     nationality: profile.country || '',
-                    visa: profile.visa || '',
                     location: profile.address || '',
-                    phone_number: profile.phone_number || ''
+                    gender: profile.gender || '',
+                    moveable: profile.moveable !== null ? profile.moveable : 0
                 });
-
-                // 전화번호가 있는지 확인
-                setHasPhoneNumber(!!profile.phone_number);
             }
         } catch (error) {
             console.error('Error fetching profile:', error);
@@ -82,25 +75,14 @@ const JobSeekerInfoPage = () => {
         try {
             setSaving(true);
 
-            // 전화번호가 없는 경우 필수 입력 체크
-            if (!hasPhoneNumber && !formData.phone_number) {
-                alert('전화번호를 입력해주세요.');
-                setSaving(false);
-                return;
-            }
-
             const updateData = {
                 name: formData.name,
                 birth: formData.birth_date,
                 country: formData.nationality,
-                visa: formData.visa,
-                address: formData.location
+                address: formData.location,
+                gender: formData.gender,
+                moveable: formData.moveable
             };
-
-            // 전화번호가 없는 경우에만 업데이트에 포함
-            if (!hasPhoneNumber) {
-                updateData.phone_number = formData.phone_number;
-            }
 
             const { error } = await supabase
                 .from('profiles')
@@ -146,11 +128,11 @@ const JobSeekerInfoPage = () => {
                         <p className="text-sm opacity-80 mt-1">단계 1: 기본 정보</p>
                     </div>
                     <button
-                        onClick={() => navigate('/jobseeker/dashboard')}
+                        onClick={handleLogout}
                         className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
                     >
-                        {/*<Home className="w-4 h-4" />*/}
-                        <span className="text-sm font-medium">홈</span>
+                        <span>🚪</span>
+                        <span className="text-sm font-medium">로그아웃</span>
                     </button>
                 </div>
             </div>
@@ -225,7 +207,7 @@ const JobSeekerInfoPage = () => {
                             </div>
                         </div>
 
-                        {/* Nationality and Visa */}
+                        {/* Nationality and Location */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -259,33 +241,8 @@ const JobSeekerInfoPage = () => {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    <CreditCard className="inline w-4 h-4 mr-1" />
-                                    비자 유형 <span className="text-red-500">*</span>
-                                </label>
-                                <select
-                                    name="visa"
-                                    value={formData.visa}
-                                    onChange={handleInputChange}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    required
-                                >
-                                    <option value="">비자 유형 선택</option>
-                                    <option value="E-9">E-9 (비전문취업)</option>
-                                    <option value="H-2">H-2 (방문취업)</option>
-                                    <option value="F-4">F-4 (재외동포)</option>
-                                    <option value="F-6">F-6 (결혼이민)</option>
-                                    <option value="F-2">F-2 (거주)</option>
-                                    <option value="F-5">F-5 (영주)</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        {/* Location and Phone */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
                                     <MapPin className="inline w-4 h-4 mr-1" />
-                                    희망 지역 <span className="text-red-500">*</span>
+                                    현재 거주 지역 <span className="text-red-500">*</span>
                                 </label>
                                 <select
                                     name="location"
@@ -314,33 +271,76 @@ const JobSeekerInfoPage = () => {
                                     <option value="Jeju">제주</option>
                                 </select>
                             </div>
+                        </div>
+
+                        {/* Gender and Moveable */}
+                        <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    <Phone className="inline w-4 h-4 mr-1" />
-                                    전화번호
-                                    {!hasPhoneNumber && <span className="text-red-500"> *</span>}
-                                    {hasPhoneNumber && <span className="text-blue-600 text-xs ml-2">(수정 불가)</span>}
+                                    <Users className="inline w-4 h-4 mr-1" />
+                                    성별 <span className="text-red-500">*</span>
                                 </label>
-                                <input
-                                    type="text"
-                                    name="phone_number"
-                                    value={formData.phone_number}
-                                    onChange={handleInputChange}
-                                    placeholder={hasPhoneNumber ? "이미 등록된 번호" : "전화번호 입력"}
-                                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                                        hasPhoneNumber
-                                            ? 'bg-gray-100 border-gray-200 cursor-not-allowed text-gray-500'
-                                            : 'border-gray-300'
-                                    }`}
-                                    required={!hasPhoneNumber}
-                                    disabled={hasPhoneNumber}
-                                    readOnly={hasPhoneNumber}
-                                />
-                                {!hasPhoneNumber && (
-                                    <p className="mt-1 text-xs text-gray-500">
-                                        전화번호는 한 번 등록하면 수정할 수 없습니다.
-                                    </p>
-                                )}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(prev => ({ ...prev, gender: 'Male' }))}
+                                        className={`py-3 px-4 rounded-lg border-2 transition-all ${
+                                            formData.gender === 'Male'
+                                                ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                                : 'border-gray-300 hover:border-gray-400'
+                                        }`}
+                                    >
+                                        <div className="font-medium">남성</div>
+                                        <div className="text-xs mt-1 opacity-80">Male</div>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(prev => ({ ...prev, gender: 'Female' }))}
+                                        className={`py-3 px-4 rounded-lg border-2 transition-all ${
+                                            formData.gender === 'Female'
+                                                ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                                : 'border-gray-300 hover:border-gray-400'
+                                        }`}
+                                    >
+                                        <div className="font-medium">여성</div>
+                                        <div className="text-xs mt-1 opacity-80">Female</div>
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <ToggleLeft className="inline w-4 h-4 mr-1" />
+                                    지역 이동 가능 <span className="text-red-500">*</span>
+                                </label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(prev => ({ ...prev, moveable: 1 }))}
+                                        className={`py-3 px-4 rounded-lg border-2 transition-all ${
+                                            formData.moveable === 1
+                                                ? 'border-green-500 bg-green-50 text-green-700'
+                                                : 'border-gray-300 hover:border-gray-400'
+                                        }`}
+                                    >
+                                        <div className="font-medium">가능</div>
+                                        <div className="text-xs mt-1 opacity-80">Yes</div>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(prev => ({ ...prev, moveable: 0 }))}
+                                        className={`py-3 px-4 rounded-lg border-2 transition-all ${
+                                            formData.moveable === 0
+                                                ? 'border-red-500 bg-red-50 text-red-700'
+                                                : 'border-gray-300 hover:border-gray-400'
+                                        }`}
+                                    >
+                                        <div className="font-medium">불가능</div>
+                                        <div className="text-xs mt-1 opacity-80">No</div>
+                                    </button>
+                                </div>
+                                <p className="mt-1 text-xs text-gray-500">
+                                    다른 지역으로 이동하여 근무가 가능한지 선택해주세요.
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -348,7 +348,7 @@ const JobSeekerInfoPage = () => {
                     {/* Buttons */}
                     <div className="mt-8 flex gap-4">
                         <button
-                            onClick={() => alert('뒤로 가기')}
+                            onClick={() => navigate('/jobseeker/dashboard')}
                             className="flex-1 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
                         >
                             뒤로
@@ -360,9 +360,10 @@ const JobSeekerInfoPage = () => {
                                 !formData.name ||
                                 !formData.birth_date ||
                                 !formData.nationality ||
-                                !formData.visa ||
                                 !formData.location ||
-                                (!hasPhoneNumber && !formData.phone_number)
+                                !formData.gender ||
+                                formData.moveable === null ||
+                                formData.moveable === undefined
                             }
                             className="flex-1 py-3 bg-blue-900 text-white font-semibold rounded-lg hover:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
@@ -377,7 +378,7 @@ const JobSeekerInfoPage = () => {
                         <p className="text-sm text-green-700">
                             ✓ 프로필 찾음. 생성일: {new Date(profile.created_at).toLocaleDateString()}
                         </p>
-                        {hasPhoneNumber && (
+                        {profile.phone_number && (
                             <p className="text-sm text-blue-700 mt-1">
                                 📱 등록된 전화번호: {profile.phone_number}
                             </p>

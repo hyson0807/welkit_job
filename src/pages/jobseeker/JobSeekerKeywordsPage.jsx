@@ -15,7 +15,8 @@ const JobSeekerKeywordsPage = () => {
     const [keywords, setKeywords] = useState({
         '직무': [],
         '지역': [],
-        '혜택': []
+        '혜택': [],
+        '비자': []
     });
     const [selectedKeywords, setSelectedKeywords] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -24,11 +25,10 @@ const JobSeekerKeywordsPage = () => {
     // AI 기능을 위한 추가 상태
     const [selfDescription, setSelfDescription] = useState('');
     const [extracting, setExtracting] = useState(false);
-    const [showManualSelection, setShowManualSelection] = useState(false);
 
     // 선택된 키워드 객체들을 가져오는 함수
     const getSelectedKeywordObjects = () => {
-        const allKeywordsList = [...keywords['직무'], ...keywords['지역'], ...keywords['혜택']];
+        const allKeywordsList = [...keywords['직무'], ...keywords['지역'], ...keywords['혜택'], ...keywords['비자']];
         return allKeywordsList.filter(keyword => selectedKeywords.includes(keyword.id));
     };
 
@@ -46,7 +46,9 @@ const JobSeekerKeywordsPage = () => {
             const groupedKeywords = {
                 '직무': data.filter(k => k.category === '직무'),
                 '지역': data.filter(k => k.category === '지역'),
-                '혜택': data.filter(k => k.category === '혜택')
+                '혜택': data.filter(k => k.category === '혜택'),
+                '비자': data.filter(k => k.category === '비자')
+
             };
 
             setKeywords(groupedKeywords);
@@ -263,58 +265,7 @@ const JobSeekerKeywordsPage = () => {
 
             {/* Keywords Selection */}
             <div className="max-w-4xl mx-auto px-5 py-8">
-                {/* AI Input Section */}
-                <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
-                    <div className="flex items-center gap-3 mb-6">
-                        <span className="text-3xl">🤖</span>
-                        <h2 className="text-2xl font-bold text-gray-800">AI로 키워드 추출하기</h2>
-                    </div>
 
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                자기소개를 입력해주세요
-                            </label>
-                            <textarea
-                                value={selfDescription}
-                                onChange={(e) => setSelfDescription(e.target.value)}
-                                placeholder="예시: 저는 베트남에서 온 25살 청년입니다. 한국어를 조금 할 수 있고, 베트남에서 식당 주방에서 2년간 일한 경험이 있습니다. 서울이나 경기 지역에서 일하고 싶고, 기숙사가 있는 곳이면 좋겠습니다. 성실하고 열심히 일할 자신이 있습니다."
-                                rows={5}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                            />
-                            <p className="mt-1 text-xs text-gray-500">
-                                자신의 경험, 능력, 희망 근무지역 등을 자유롭게 작성해주세요.
-                            </p>
-                        </div>
-
-                        <div className="flex gap-4">
-                            <button
-                                onClick={handleExtractKeywords}
-                                disabled={extracting || !selfDescription.trim()}
-                                className="flex-1 py-3 bg-blue-900 text-white font-semibold rounded-lg hover:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                            >
-                                {extracting ? (
-                                    <>
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                        키워드 추출 중...
-                                    </>
-                                ) : (
-                                    <>
-                                        <span>🔍</span>
-                                        AI로 키워드 추출하기
-                                    </>
-                                )}
-                            </button>
-
-                            <button
-                                onClick={() => setShowManualSelection(!showManualSelection)}
-                                className="px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
-                            >
-                                {showManualSelection ? '숨기기' : '수동 선택'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
 
                 {/* Selected Keywords Display */}
                 {currentSelectedKeywords.length > 0 && (
@@ -342,7 +293,7 @@ const JobSeekerKeywordsPage = () => {
                 )}
 
                 {/* Manual Selection */}
-                {showManualSelection && (
+
                     <div className="bg-white rounded-2xl shadow-lg p-8">
                         <div className="mb-6">
                             <h2 className="text-2xl font-bold text-gray-800 mb-2">키워드를 선택해주세요</h2>
@@ -385,33 +336,7 @@ const JobSeekerKeywordsPage = () => {
                             </div>
                         </div>
 
-                        {/* 지역 카테고리 */}
-                        <div className="mb-6">
-                            <div className="border rounded-lg p-4 bg-blue-50">
-                                <h3 className="text-lg font-semibold text-blue-700 mb-3 flex items-center">
-                                    <MapPin className="w-5 h-5 mr-2" />
-                                    지역 (Location)
-                                    <span className="text-sm font-normal text-blue-600 ml-2">
-                                        ({getSelectedCount('지역')}/{keywords['지역'].length})
-                                    </span>
-                                </h3>
-                                <div className="flex flex-wrap gap-2">
-                                    {keywords['지역'].map((keyword) => (
-                                        <button
-                                            key={keyword.id}
-                                            onClick={() => toggleKeyword(keyword.id)}
-                                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                                                selectedKeywords.includes(keyword.id)
-                                                    ? 'bg-blue-500 text-white shadow-md transform scale-105'
-                                                    : 'bg-white text-blue-700 border border-blue-300 hover:bg-blue-100'
-                                            }`}
-                                        >
-                                            {keyword.keyword}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
+
 
                         {/* 혜택 카테고리 */}
                         <div className="mb-6">
@@ -440,8 +365,86 @@ const JobSeekerKeywordsPage = () => {
                                 </div>
                             </div>
                         </div>
+
+                        <div className="mb-6">
+                            <div className="border rounded-lg p-4 bg-green-50">
+                                <h3 className="text-lg font-semibold text-green-700 mb-3 flex items-center">
+                                    <Gift className="w-5 h-5 mr-2" />
+                                    비자 (Benefits)
+                                    <span className="text-sm font-normal text-green-600 ml-2">
+                                        ({getSelectedCount('비자')}/{keywords['비자'].length})
+                                    </span>
+                                </h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {keywords['비자'].map((keyword) => (
+                                        <button
+                                            key={keyword.id}
+                                            onClick={() => toggleKeyword(keyword.id)}
+                                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                                                selectedKeywords.includes(keyword.id)
+                                                    ? 'bg-green-500 text-white shadow-md transform scale-105'
+                                                    : 'bg-white text-green-700 border border-green-300 hover:bg-green-100'
+                                            }`}
+                                        >
+                                            {keyword.keyword}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+
+
                     </div>
-                )}
+
+
+                {/* AI Input Section */}
+                <div className="bg-white rounded-2xl shadow-lg p-8 mb-6 mt-4">
+                    <div className="flex items-center gap-3 mb-6">
+                        <span className="text-3xl">🤖</span>
+                        <h2 className="text-2xl font-bold text-gray-800">우리가 이력서 만들어줄께요!</h2>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                원하는 직업 조건이나 간단한 자기소개 해주세요!
+                            </label>
+                            <textarea
+                                value={selfDescription}
+                                onChange={(e) => setSelfDescription(e.target.value)}
+                                placeholder="예시: 저는 베트남에서 온 25살 청년입니다. 한국어를 조금 할 수 있고, 베트남에서 식당 주방에서 2년간 일한 경험이 있습니다. 서울이나 경기 지역에서 일하고 싶고, 기숙사가 있는 곳이면 좋겠습니다. 성실하고 열심히 일할 자신이 있습니다."
+                                rows={5}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                            />
+                            <p className="mt-1 text-xs text-gray-500">
+                                자신의 경험, 능력, 희망 근무지역 등을 자유롭게 작성해주세요.
+                            </p>
+                        </div>
+
+                        <div className="flex gap-4">
+                            <button
+                                onClick={handleExtractKeywords}
+                                disabled={extracting || !selfDescription.trim()}
+                                className="flex-1 py-3 bg-blue-900 text-white font-semibold rounded-lg hover:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                {extracting ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                        키워드 추출 중...
+                                    </>
+                                ) : (
+                                    <>
+                                        <span>🔍</span>
+                                        AI로 키워드 추출하기
+                                    </>
+                                )}
+                            </button>
+
+
+                        </div>
+                    </div>
+                </div>
 
                 {/* Buttons */}
                 <div className="mt-8 flex gap-4">

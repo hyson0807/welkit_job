@@ -295,7 +295,7 @@ const CompanyInfoPage = () => {
                     {/* Buttons */}
                     <div className="mt-8 flex gap-4">
                         <button
-                            onClick={() => navigate('/')}
+                            onClick={() => navigate('/employer/dashboard')}
                             className="flex-1 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
                         >
                             Back

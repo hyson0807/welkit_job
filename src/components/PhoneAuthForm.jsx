@@ -105,9 +105,9 @@ const PhoneAuthForm = ({ userType  }) => {
             }
 
             if (userType === 'user') {
-                navigate('/jobseeker/info');
+                navigate('/jobseeker/dashboard');
             } else {
-                navigate('/employer/info');
+                navigate('/employer/dashboard');
             }
 
 

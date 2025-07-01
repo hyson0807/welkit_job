@@ -19,7 +19,14 @@ const MainPage = () => {
     const handleModeSelect = (mode) => {
         // 유저 타입을 저장하고 로그인 페이지로 이동
         localStorage.setItem('userType', mode);
-        navigate('/companies');
+
+        if (mode === 'company') {
+            // 회사 모드 선택시 유저 리스트 페이지로 이동
+            navigate('/employer/users');
+        } else {
+            // 구직자 모드는 기존대로 로그인 페이지로
+            navigate('/companies');
+        }
     };
 
     useEffect(() => {
