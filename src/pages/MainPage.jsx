@@ -19,7 +19,7 @@ const MainPage = () => {
     const handleModeSelect = (mode) => {
         // 유저 타입을 저장하고 로그인 페이지로 이동
         localStorage.setItem('userType', mode);
-        navigate('/login');
+        navigate('/companies');
     };
 
     useEffect(() => {
